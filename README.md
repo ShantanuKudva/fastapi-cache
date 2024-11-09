@@ -50,13 +50,42 @@ or
 
 ### Quick Start
 
-```python
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+Using in-memory backend:
 
+```python
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from starlette.requests import Request
-from starlette.responses import Response
+
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_cache.decorator import cache
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+@cache()
+async def get_cache():
+    return 1
+
+
+@app.get("/")
+@cache(expire=60)
+async def index():
+    return dict(hello="world")
+```
+
+or [Redis](https://redis.io) backend:
+
+```python
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -66,7 +95,7 @@ from redis import asyncio as aioredis
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI):
     redis = aioredis.from_url("redis://localhost")
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     yield
@@ -85,7 +114,6 @@ async def get_cache():
 async def index():
     return dict(hello="world")
 ```
-
 ### Initialization
 
 First you must call `FastAPICache.init` during startup FastAPI startup; this is where you set global configuration.
