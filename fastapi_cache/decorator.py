@@ -142,7 +142,7 @@ def cache(
                     # unintuitively, we have to await once here, so that caller
                     # does not have to await twice. See
                     # https://stackoverflow.com/a/59268198/532513
-                    return await func(*args, **kwargs)
+                    return await func(*args, **kwargs)  # type: ignore[no-any-return]
                 else:
                     # sync, wrap in thread and return async
                     # see above why we have to await even although caller also awaits.
@@ -221,7 +221,7 @@ def cache(
                         return response
 
                 result = cast(R, coder.decode_as_type(cached, type_=return_type))
-                if isinstance(result, Response):
+                if response and isinstance(result, Response):
                     result.headers.update(response.headers)
             return result
 
