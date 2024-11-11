@@ -19,4 +19,11 @@ class MemcachedBackend(Backend):
         await self.mcache.set(key.encode(), value, exptime=expire or 0)
 
     async def clear(self, namespace: Optional[str] = None, key: Optional[str] = None) -> int:
-        raise NotImplementedError
+        is_deleted = False
+        if key:
+            is_deleted = await self.mcache.delete(key=key.encode())
+        else:
+            await self.mcache.flush_all()
+            is_deleted = True
+
+        return int(is_deleted)
